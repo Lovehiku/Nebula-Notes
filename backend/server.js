@@ -3,6 +3,15 @@ const mongoose=require('mongoose');
 const cors=require ('cors');
 require('dotenv').config();
 
+//require routes
+const userRoutes=require('./routes/auth');
+const noteRoutes=require('./routes/notes');
+
+// Use routes
+app.use('/api/users',userRoutes);
+app.use('/api/notes',noteRoutes);   
+
+
 // Initialize Express app
 const app=express();
 const PORT=process.env.PORT || 5000;
