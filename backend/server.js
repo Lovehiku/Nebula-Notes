@@ -7,9 +7,7 @@ require('dotenv').config();
 const userRoutes=require('./routes/auth');
 const noteRoutes=require('./routes/notes');
 
-// Use routes
-app.use('/api/users',userRoutes);
-app.use('/api/notes',noteRoutes);   
+
 
 
 // Initialize Express app
@@ -17,6 +15,10 @@ const app=express();
 const PORT=process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
+
+// Use routes
+app.use('/api/users',userRoutes);
+app.use('/api/notes',noteRoutes);   
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)

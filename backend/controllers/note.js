@@ -1,4 +1,4 @@
-const Note = require('../models/note');
+const Note = require('../model/note');
 
 // Create a new note
 exports.createNote = async (req, res) => {
@@ -8,8 +8,8 @@ exports.createNote = async (req, res) => {
         await note.save();
         res.status(201).json({ message: 'Note created successfully', note });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }   
+console.error(error); // log the actual error
+res.status(500).json({ message: 'Server error', error: error.message });    }   
 };
 
 // Get all notes for the logged-in user
@@ -18,8 +18,8 @@ exports.getNotes = async (req, res) => {
         const notes = await Note.find({ owner: req.user.id });
         res.status(200).json({ notes });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }   
+console.error(error); // log the actual error
+res.status(500).json({ message: 'Server error', error: error.message });    }   
 };
 
 // Update a note
@@ -37,7 +37,8 @@ exports.updateNote = async (req, res) => {
         }
         res.status(200).json({ message: 'Note updated successfully', note });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+       console.error(error); // log the actual error
+res.status(500).json({ message: 'Server error', error: error.message });
     }   
 };      
 
@@ -51,6 +52,7 @@ exports.deleteNote = async (req, res) => {
         }   
         res.status(200).json({ message: 'Note deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+
+     console.error(error); // log the actual error
+res.status(500).json({ message: 'Server error', error: error.message });    }
 };

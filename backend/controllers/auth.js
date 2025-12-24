@@ -1,4 +1,4 @@
-const user =require('../models/user');
+const user =require('../model/user');
 const jwt = require('jsonwebtoken');
 
 // helpers
@@ -22,7 +22,9 @@ exports.signup = async (req, res) => {
         const token = generateToken(User);
         res.status(201).json({ token });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+console.error(error); // log the actual error
+res.status(500).json({ message: 'Server error', error: error.message });
+
     }   
 };
 
@@ -37,6 +39,7 @@ exports.login = async (req, res) => {
         const token = generateToken(User);
         res.status(200).json({ message:'login successful', token });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });      
+        console.error(error); // log the actual error
+        res.status(500).json({ message: 'Server error', error: error.message });      
     }
     } ;

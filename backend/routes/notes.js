@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/note');
 const {authenticate} = require('../middleware/auth');
+const noteController = require('../controllers/note');
 
 //create note route
 router.post('/', authenticate , noteController.createNote);
