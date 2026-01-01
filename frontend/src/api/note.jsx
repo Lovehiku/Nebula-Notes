@@ -1,11 +1,9 @@
 import axios from "axios";
-import React from "react";
 
 const API_URL = "http://localhost:5000/api/notes";
 
-// Axios instance (cleaner)
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL
 });
 
 // Attach token automatically
@@ -20,13 +18,13 @@ api.interceptors.request.use((config) => {
 // Get all notes
 export async function getNotes() {
   const res = await api.get("/");
-  return res.data; // <-- important
+  return res.data.notes; // ✅ FIXED
 }
 
 // Create note
 export async function createNote(note) {
   const res = await api.post("/", note);
-  return res.data;
+  return res.data.note;
 }
 
 // Get single note
@@ -38,7 +36,7 @@ export async function getNote(id) {
 // Update note
 export async function updateNote(id, note) {
   const res = await api.put(`/${id}`, note);
-  return res.data;
+  return res.data.note;
 }
 
 // Delete note

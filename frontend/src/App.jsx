@@ -7,7 +7,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import { useNavigate } from 'react-router-dom'
 import CreateNote from './pages/createNote.jsx'
 import './App.css'
-
+import ViewNote from './pages/viewNote.jsx'
 function App() {
     const navigate = useNavigate()
     function onLogout() { 
@@ -23,6 +23,7 @@ function App() {
       <Route path="/login" element={<Login onLogin={handleLogin}/>} /> 
       <Route path="/dashboard" element={<Dashboard />} /> 
       <Route path="/createNote" element={<CreateNote />} /> 
+      <Route path="/notes/:id" element={<ViewNote/>} />
     </Routes> </>
   )
 }

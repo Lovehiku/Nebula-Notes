@@ -8,7 +8,8 @@ router.post('/', authenticate , noteController.createNote);
 
 //get notes route
 router.get('/', authenticate , noteController.getNotes);
-
+//get single note route
+router.get('/:id', authenticate , noteController.getNote);
 //update note route
 router.put('/:id', authenticate , noteController.updateNote);
 

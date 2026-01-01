@@ -24,23 +24,32 @@ function Dashboard() {
   }, []);
 
   return (
-    <div className="container">
-      <h2>Your Notes</h2>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Notes</h2>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        {loading && (
+          <p className="text-gray-500 animate-pulse">Loading...</p>
+        )}
 
-      {!loading && !error && (
-        <>
-          {notes.length > 0 ? (
-            notes.map((note) => (
-              <NoteCard key={note._id} note={note} />
-            ))
-          ) : (
-            <p>No notes found.</p>
-          )}
-        </>
-      )}
+        {error && (
+          <p className="text-red-600 font-medium">{error}</p>
+        )}
+
+        {!loading && !error && (
+          <>
+            {notes.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {notes.map((note) => (
+                  <NoteCard key={note._id} note={note} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 italic">No notes found.</p>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
