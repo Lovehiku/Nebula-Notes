@@ -2,11 +2,13 @@ import { useState } from "react";
 import { createNote } from "../api/note";
 import { useNavigate } from "react-router-dom";
 import React from 'react';
+import RichEditor from "../components/RichEditor.jsx";
 
 function CreateNote() {
   const navigate = useNavigate();
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState("Untitled");
   const [content, setContent] = useState("");
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,38 +20,33 @@ function CreateNote() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form 
-        onSubmit={handleSubmit} 
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-lg space-y-4"
-      >
-        <h2 className="text-2xl font-bold text-gray-800 text-center">Create Note</h2>
-
-        <input 
-          type="text" 
-          value={title} 
-          onChange={(e) => setTitle(e.target.value)} 
-          placeholder="Title" 
-          required 
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        />
-
-        <textarea 
-          value={content} 
-          onChange={(e) => setContent(e.target.value)} 
-          placeholder="Content" 
-          required 
-          rows="6"
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
-        />
-
-        <button 
-          type="submit" 
-          className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-semibold"
-        >
-          Create Note
-        </button>
-      </form>
+    <div className="min-h-screen bg-[#0F172A] text-white">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#334155]">
+        <div className="flex items-center gap-2">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="bg-transparent text-white text-lg sm:text-xl font-semibold outline-none w-[180px] sm:w-[240px]"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="h-9 px-4 rounded-md bg-[#1E293B] hover:bg-[#334155] transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="h-9 px-4 rounded-md bg-gradient-to-r from-[#6D2AA0] via-[#8E24AA] to-[#9C27B0] hover:opacity-90 transition"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+      <div className="px-4 sm:px-6 py-4">
+        <RichEditor value={content} onChange={setContent} theme="dark" />
+      </div>
     </div>
   );
 }

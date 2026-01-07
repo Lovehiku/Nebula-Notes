@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { getNotes, createNote } from "../api/note";
+import { useNavigate } from "react-router-dom";
+import { getNotes, createNote, updateNote } from "../api/note";
 import { getFolders, createFolder } from "../api/folder";
 import { getMe } from "../api/auth";
+import RichEditor from "../components/RichEditor";
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [notes, setNotes] = useState([]);
   const [folders, setFolders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +61,20 @@ function Dashboard() {
     { bg: "bg-[#7EC2E6]", dot: "bg-[#1C1C1C]" },
   ];
 
+  function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function highlight(text, query, truncateLen) {
+    let t = text || "";
+    if (truncateLen && t.length > truncateLen) t = t.slice(0, truncateLen) + "...";
+    if (!query) return t;
+    try {
+      const re = new RegExp(escapeRegExp(query), "gi");
+      return t.replace(re, (m) => `<mark>${m}</mark>`);
+    } catch {
+      return t;
+    }
+  }
   return (
     <div className="min-h-screen bg-[#F4F6FA] py-6 px-4">
       <div className="max-w-[1200px] mx-auto flex">
@@ -77,14 +94,6 @@ function Dashboard() {
                 <span className="w-3 h-3 rounded-full bg-[#2ECC71]" />
               </div>
             </div>
-          </div>
-          <div className="mt-4 bg-white rounded-2xl shadow-sm p-4">
-            <div className="text-[#1C1C1C] text-sm mb-3">
-              Want to access advanced metrics and features?
-            </div>
-            <button className="w-full bg-[#1F3B64] text-white rounded-xl py-2 text-sm">
-              Upgrade pro
-            </button>
           </div>
         </aside>
 
@@ -149,7 +158,27 @@ function Dashboard() {
               </div>
               <div className="grid grid-cols-4 gap-6">
                 {folders.map((f) => (
-                  <div key={f._id} className="rounded-2xl bg-[#DCEEFE] p-5 shadow-sm">
+                  <div
+                    key={f._id}
+                    className="rounded-2xl bg-[#DCEEFE] p-5 shadow-sm"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={async (e) => {
+                      const id = e.dataTransfer.getData("text/note-id");
+                      if (!id) return;
+                      const res = await fetch(`http://localhost:5000/api/notes/${id}`, {
+                        method: "PUT",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+                        },
+                        body: JSON.stringify({ folder: f._id }),
+                      });
+                      if (res.ok) {
+                        const updated = await res.json();
+                        setNotes(notes.map((n) => (n._id === id ? updated.note : n)));
+                      }
+                    }}
+                  >
                     <div className="flex justify-between items-center mb-4">
                       <div className="w-10 h-10 rounded-lg bg-[#A8CDED]" />
                       <div className="flex gap-2">
@@ -195,6 +224,23 @@ function Dashboard() {
                     setShowFolderModal(true);
                   }}
                   className="rounded-2xl border border-dashed border-[#D7D9DE] p-5 text-center text-[#7A7F87] shadow-sm"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={async (e) => {
+                    const id = e.dataTransfer.getData("text/note-id");
+                    if (!id) return;
+                    const res = await fetch(`http://localhost:5000/api/notes/${id}`, {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+                      },
+                      body: JSON.stringify({ folder: null }),
+                    });
+                    if (res.ok) {
+                      const updated = await res.json();
+                      setNotes(notes.map((n) => (n._id === id ? updated.note : n)));
+                    }
+                  }}
                 >
                   <div className="w-10 h-10 rounded-lg bg-[#E6E8EC] mx-auto mb-3" />
                   <div>New folder</div>
@@ -241,20 +287,49 @@ function Dashboard() {
                           <div
                             key={note._id}
                             className={`rounded-2xl ${palette.bg} p-5 shadow-sm`}
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData("text/note-id", note._id);
+                            }}
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="text-xs uppercase tracking-wide text-[#7A7F87]">
                                 {note.folder?.name || "category"}
                               </div>
-                              <span className={`w-3 h-3 rounded-full ${palette.dot}`} />
+                              <div className="flex items-center gap-2">
+                                <button
+                                  title={note.bookmarked ? "Unbookmark" : "Bookmark"}
+                                  onClick={async () => {
+                                    const updated = await updateNote(note._id, { bookmarked: !note.bookmarked });
+                                    setNotes(notes.map((n) => (n._id === note._id ? updated : n)));
+                                  }}
+                                >
+                                  {note.bookmarked ? "🔖" : "📑"}
+                                </button>
+                                <button
+                                  title={note.pinned ? "Unpin" : "Pin"}
+                                  onClick={async () => {
+                                    const updated = await updateNote(note._id, { pinned: !note.pinned });
+                                    setNotes(
+                                      notes
+                                        .map((n) => (n._id === note._id ? updated : n))
+                                        .sort((a, b) => Number(b.pinned) - Number(a.pinned))
+                                    );
+                                  }}
+                                >
+                                  {note.pinned ? "📌" : "📍"}
+                                </button>
+                              </div>
                             </div>
                             <div className="text-[#1C1C1C] font-semibold mb-2">
-                              {note.title}
+                              <span dangerouslySetInnerHTML={{ __html: highlight(note.title, q) }} />
                             </div>
                             <div className="text-[#3E434A] text-sm leading-6 mb-6">
-                              {note.content?.length > 120
-                                ? note.content.slice(0, 120) + "..."
-                                : note.content}
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: highlight(note.content || "", q, 160),
+                                }}
+                              />
                             </div>
                             <div className="flex items-center justify-between text-[#7A7F87] text-xs">
                               <span>
@@ -302,9 +377,7 @@ function Dashboard() {
 
                   <button
                     onClick={() => {
-                      setEditingNote(null);
-                      setNoteForm({ title: "", content: "", folder: "" });
-                      setShowNoteModal(true);
+                      navigate("/createNote");
                     }}
                     className="rounded-2xl border border-dashed border-[#D7D9DE] p-5 text-center text-[#7A7F87] shadow-sm"
                   >
@@ -325,11 +398,9 @@ function Dashboard() {
                       value={noteForm.title}
                       onChange={(e) => setNoteForm({ ...noteForm, title: e.target.value })}
                     />
-                    <textarea
-                      className="w-full rounded-md border border-[#E6E8EC] px-3 py-2 h-24"
-                      placeholder="Description"
+                    <RichEditor
                       value={noteForm.content}
-                      onChange={(e) => setNoteForm({ ...noteForm, content: e.target.value })}
+                      onChange={(html) => setNoteForm({ ...noteForm, content: html })}
                     />
                     <select
                       className="w-full h-10 rounded-md border border-[#E6E8EC] px-3"

@@ -12,6 +12,14 @@ const noteSchema=new mongoose.Schema({
         ref:'Folder',
         default:null
     },
+    pinned:{
+        type:Boolean,
+        default:false
+    },
+    bookmarked:{
+        type:Boolean,
+        default:false
+    },
     title:{
         type:String,
         required:true,

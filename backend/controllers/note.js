@@ -6,12 +6,14 @@ const Folder = require("../model/folder");
  */
 exports.createNote = async (req, res) => {
   try {
-    const { title, content, folder } = req.body;
+    const { title, content, folder, pinned, bookmarked } = req.body;
 
     const note = new Note({
       title,
       content,
       folder: folder || null,
+      pinned: !!pinned,
+      bookmarked: !!bookmarked,
       user: req.user.id // ✅ correct
     });
 
@@ -81,7 +83,7 @@ exports.getNotes = async (req, res) => {
       }
       if (start) filter.createdAt = { $gte: start, $lte: now };
     }
-    const notes = await Note.find(filter).sort({ createdAt: -1 }).populate("folder");
+    const notes = await Note.find(filter).sort({ pinned: -1, createdAt: -1 }).populate("folder");
 
     res.status(200).json({
       notes
@@ -101,11 +103,11 @@ exports.getNotes = async (req, res) => {
 exports.updateNote = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, folder } = req.body;
+    const { title, content, folder, pinned, bookmarked } = req.body;
 
     const note = await Note.findOneAndUpdate(
       { _id: id, user: req.user.id }, // ✅ FIXED
-      { title, content, folder: folder || null },
+      { title, content, folder: folder || null, ...(pinned !== undefined ? { pinned: !!pinned } : {}), ...(bookmarked !== undefined ? { bookmarked: !!bookmarked } : {}) },
       { new: true }
     );
 
