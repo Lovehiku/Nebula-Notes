@@ -16,11 +16,12 @@ function Dashboard() {
   const [noteRange, setNoteRange] = useState("today");
   const [q, setQ] = useState("");
   const [showNoteModal, setShowNoteModal] = useState(false);
-  const [editingNote, setEditingNote] = useState(null);
+  const [editingNote] = useState(null);
   const [noteForm, setNoteForm] = useState({ title: "", content: "", folder: "" });
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [editingFolder, setEditingFolder] = useState(null);
   const [folderForm, setFolderForm] = useState({ name: "" });
+  const [selectedFolder, setSelectedFolder] = useState(null);
 
   useEffect(() => {
     const fetchNotes = async () => {
@@ -86,14 +87,6 @@ function Dashboard() {
               </div>
               <span className="text-[#1F3B64] font-semibold">{user?.username || "User"}</span>
             </div>
-            <div className="mb-6">
-              <div className="text-sm text-gray-900 font-medium mb-3">Add new</div>
-              <div className="flex gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#1F3B64]" />
-                <span className="w-3 h-3 rounded-full bg-[#FF3B3B]" />
-                <span className="w-3 h-3 rounded-full bg-[#2ECC71]" />
-              </div>
-            </div>
           </div>
         </aside>
 
@@ -119,8 +112,14 @@ function Dashboard() {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-[#7A7F87]">{user?.username || "User"}</span>
-                <div className="w-9 h-9 rounded-full bg-[#E6E8EC]" />
+                <button
+                  onClick={() => navigate("/bookmarks")}
+                  className="px-4 h-10 rounded-md bg-[#E6E8EC]"
+                >
+                  Bookmarks
+                </button>
+                {/* <span className="text-sm text-[#7A7F87]">{user?.username || "User"}</span>
+                <div className="w-9 h-9 rounded-full bg-[#E6E8EC]" /> */}
                 <button
                   onClick={() => {
                     localStorage.removeItem("token");
@@ -129,7 +128,7 @@ function Dashboard() {
                   className="w-10 h-10 rounded-md bg-[#E6E8EC] flex items-center justify-center"
                   title="Logout"
                 >
-                  🚪
+                  <img src="../public/image.png" alt="" />
                 </button>
               </div>
             </div>
@@ -161,9 +160,10 @@ function Dashboard() {
                   <div
                     key={f._id}
                     className="rounded-2xl bg-[#DCEEFE] p-5 shadow-sm"
+                    onClick={() => setSelectedFolder({ id: f._id, name: f.name })}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={async (e) => {
-                      const id = e.dataTransfer.getData("text/note-id");
+                      const id = e.dataTransfer.getData("text/plain");
                       if (!id) return;
                       const res = await fetch(`http://localhost:5000/api/notes/${id}`, {
                         method: "PUT",
@@ -226,7 +226,7 @@ function Dashboard() {
                   className="rounded-2xl border border-dashed border-[#D7D9DE] p-5 text-center text-[#7A7F87] shadow-sm"
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={async (e) => {
-                    const id = e.dataTransfer.getData("text/note-id");
+                    const id = e.dataTransfer.getData("text/plain");
                     if (!id) return;
                     const res = await fetch(`http://localhost:5000/api/notes/${id}`, {
                       method: "PUT",
@@ -249,6 +249,28 @@ function Dashboard() {
             </section>
 
             <section>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  {selectedFolder ? (
+                    <>
+                      <span className="text-sm text-[#1C1C1C] font-semibold">
+                        {selectedFolder.name}
+                      </span>
+                      <button
+                        className="text-xs px-2 py-1 rounded-md bg-[#E6E8EC]"
+                        onClick={() => setSelectedFolder(null)}
+                      >
+                        Clear
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-sm text-[#7A7F87]">All Notes</span>
+                  )}
+                </div>
+                <div className="text-[#7A7F87] text-sm">
+                  {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long" })}
+                </div>
+              </div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-6 text-sm">
                   <button
@@ -270,9 +292,9 @@ function Dashboard() {
                     This Month
                   </button>
                 </div>
-                <div className="text-[#7A7F87] text-sm">
+                {/* <div className="text-[#7A7F87] text-sm">
                   {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long" })}
-                </div>
+                </div> */}
               </div>
 
               {loading && <div className="text-[#7A7F87]">Loading...</div>}
@@ -280,16 +302,22 @@ function Dashboard() {
 
               {!loading && !error && (
                 <div className="grid grid-cols-4 gap-6">
-                  {notes.length > 0 &&
-                    notes.slice(0, 4).map((note, idx) => {
+                  {(() => {
+                    const pool = selectedFolder
+                      ? notes.filter((n) => n.folder?._id === selectedFolder.id)
+                      : notes;
+                    const sorted = [...pool].sort((a, b) => Number(b.pinned) - Number(a.pinned));
+                    return sorted.slice(0, 4).map((note, idx) => {
                         const palette = noteColors[idx % noteColors.length];
                         return (
                           <div
                             key={note._id}
                             className={`rounded-2xl ${palette.bg} p-5 shadow-sm`}
                             draggable
+                            onClick={() => navigate(`/notes/${note._id}`)}
                             onDragStart={(e) => {
-                              e.dataTransfer.setData("text/note-id", note._id);
+                              e.dataTransfer.setData("text/plain", note._id);
+                              e.dataTransfer.effectAllowed = "move";
                             }}
                           >
                             <div className="flex items-center justify-between mb-2">
@@ -299,7 +327,8 @@ function Dashboard() {
                               <div className="flex items-center gap-2">
                                 <button
                                   title={note.bookmarked ? "Unbookmark" : "Bookmark"}
-                                  onClick={async () => {
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
                                     const updated = await updateNote(note._id, { bookmarked: !note.bookmarked });
                                     setNotes(notes.map((n) => (n._id === note._id ? updated : n)));
                                   }}
@@ -308,7 +337,8 @@ function Dashboard() {
                                 </button>
                                 <button
                                   title={note.pinned ? "Unpin" : "Pin"}
-                                  onClick={async () => {
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
                                     const updated = await updateNote(note._id, { pinned: !note.pinned });
                                     setNotes(
                                       notes
@@ -341,20 +371,16 @@ function Dashboard() {
                               </span>
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => {
-                                    setEditingNote(note);
-                                    setNoteForm({
-                                      title: note.title,
-                                      content: note.content,
-                                      folder: note.folder?._id || "",
-                                    });
-                                    setShowNoteModal(true);
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/notes/${note._id}`);
                                   }}
                                 >
                                   ✎
                                 </button>
                                 <button
-                                  onClick={async () => {
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
                                     const res = await fetch(`http://localhost:5000/api/notes/${note._id}`, {
                                       method: "DELETE",
                                       headers: {
@@ -373,7 +399,8 @@ function Dashboard() {
                             </div>
                           </div>
                         );
-                      })}
+                      });
+                  })()}
 
                   <button
                     onClick={() => {

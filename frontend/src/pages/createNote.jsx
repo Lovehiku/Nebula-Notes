@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { createNote } from "../api/note";
 import { useNavigate } from "react-router-dom";
 import React from 'react';
@@ -8,7 +8,14 @@ function CreateNote() {
   const navigate = useNavigate();
   const [title, setTitle] = useState("Untitled");
   const [content, setContent] = useState("");
-  
+  const containerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +27,7 @@ function CreateNote() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white">
+    <div className="min-h-screen bg-[#0F172A] text-white" ref={containerRef}>
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#334155]">
         <div className="flex items-center gap-2">
           <input
@@ -30,6 +37,18 @@ function CreateNote() {
           />
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (document.fullscreenElement) {
+                document.exitFullscreen();
+              } else {
+                containerRef.current?.requestFullscreen();
+              }
+            }}
+            className="h-9 px-4 rounded-md bg-[#1E293B] hover:bg-[#334155] transition"
+          >
+            {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+          </button>
           <button
             onClick={() => navigate("/dashboard")}
             className="h-9 px-4 rounded-md bg-[#1E293B] hover:bg-[#334155] transition"

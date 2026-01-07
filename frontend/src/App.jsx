@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import CreateNote from './pages/createNote.jsx'
 import './App.css'
 import ViewNote from './pages/viewNote.jsx'
+import Bookmarks from './pages/Bookmarks.jsx'
 function Protected({ children }) {
   const token = localStorage.getItem('token')
   if (!token) return <Navigate to="/login" replace />
@@ -26,6 +27,7 @@ function App() {
       <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} /> 
       <Route path="/createNote" element={<CreateNote />} /> 
       <Route path="/notes/:id" element={<Protected><ViewNote/></Protected>} />
+      <Route path="/bookmarks" element={<Protected><Bookmarks/></Protected>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes> </>
   )

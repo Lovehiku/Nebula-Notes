@@ -68,7 +68,7 @@ function Login({ onLogin }) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Username"
+                  placeholder="Email"
                   className="w-full max-w-full h-10 rounded-full bg-[#E7DAF5] px-10 text-gray-700 placeholder-gray-500 focus:outline-none overflow-hidden"
                 />
                 <span className="absolute left-4 top-1/2 -translate-y-1/2">👤</span>

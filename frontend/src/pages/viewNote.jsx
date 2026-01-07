@@ -1,91 +1,78 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getNote, deleteNote, updateNote } from "../api/note.jsx";
+import { getNote, updateNote } from "../api/note.jsx";
+import RichEditor from "../components/RichEditor.jsx";
 
-function NoteDetails() {
+function EditNote() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [note, setNote] = useState(null);
-  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ title: "", content: "" });
+  const containerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     async function fetchNote() {
       const data = await getNote(id);
-      setNote(data.note);
-      setForm({ title: data.note.title, content: data.note.content });
+      setForm({ title: data.note.title, content: data.note.content || "" });
+      setLoading(false);
     }
     fetchNote();
   }, [id]);
 
-  async function handleDelete() {
-    await deleteNote(id);
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  async function handleSave() {
+    await updateNote(id, { title: form.title, content: form.content });
     navigate("/dashboard");
   }
 
-  async function handleUpdate(e) {
-    e.preventDefault();
-    const data = await updateNote(id, form);
-    setNote(data.note);
-    setEditing(false);
-    navigate("/dashboard");
-  }
-
-  if (!note) return <p className="text-gray-500 text-center mt-10">Loading...</p>;
+  if (loading) return <div className="min-h-screen bg-[#0F172A] text-white flex items-center justify-center">Loading...</div>;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-lg space-y-4">
-        {editing ? (
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Title"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-            <textarea
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="Content"
-              required
-              rows="6"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
-            />
-            <button
-              type="submit"
-              className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-semibold"
-            >
-              Save
-            </button>
-          </form>
-        ) : (
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-800">{note.title}</h2>
-            <p className="text-gray-700 whitespace-pre-line">{note.content}</p>
-          </div>
-        )}
-
-        <div className="flex gap-4">
-          {!editing && (
-            <button
-              onClick={() => setEditing(true)}
-              className="flex-1 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors font-semibold"
-            >
-              Edit
-            </button>
-          )}
+    <div className="min-h-screen bg-[#0F172A] text-white" ref={containerRef}>
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#334155]">
+        <input
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          className="bg-transparent text-white text-lg sm:text-xl font-semibold outline-none w-[180px] sm:w-[240px]"
+        />
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleDelete}
-            className="flex-1 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-semibold"
+            onClick={() => {
+              if (document.fullscreenElement) {
+                document.exitFullscreen();
+              } else {
+                containerRef.current?.requestFullscreen();
+              }
+            }}
+            className="h-9 px-4 rounded-md bg-[#1E293B] hover:bg-[#334155] transition"
           >
-            Delete
+            {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+          </button>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="h-9 px-4 rounded-md bg-[#1E293B] hover:bg-[#334155] transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="h-9 px-4 rounded-md bg-gradient-to-r from-[#6D2AA0] via-[#8E24AA] to-[#9C27B0] hover:opacity-90 transition"
+          >
+            Save
           </button>
         </div>
+      </div>
+      <div className="px-4 sm:px-6 py-4">
+        <RichEditor value={form.content} onChange={(html) => setForm({ ...form, content: html })} theme="dark" />
       </div>
     </div>
   );
 }
 
-export default NoteDetails;
+export default EditNote;
